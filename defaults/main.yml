@@ -1,0 +1,92 @@
+---
+
+# facts
+
+patroni_os_family: "{{ ansible_os_family.replace(' ', '') | lower }}"
+
+# patroni
+
+patroni_packages_enabled: True
+
+## Общие параметры сервиса
+patroni_service: "patroni.service"
+patroni_service_source: "patroni.service.j2"
+patroni_config: "/etc/patroni/config.yml"
+patroni_config_source: "config.yml.j2"
+
+patroni_cluster_name: "{{ postgres_cluster_name }}"
+patroni_cluster_hosts: "{{ postgres_cluster_hosts }}"
+patroni_port: "8008"
+patroni_ip: "{{ (patroni_cluster_hosts | items2dict(key_name='host', value_name='ip'))[inventory_hostname] }}"
+patroni_restapi_username: "{{ patroni_cluster_name }}"
+patroni_restapi_password: "{{ patroni_cluster_name }}11pass"
+
+## Параметры etcd
+patroni_etcd_port: "2379"
+patroni_etcd_hosts: "{{ patroni_cluster_hosts }}"
+patroni_etcd_username: "{{ patroni_cluster_name }}"
+patroni_etcd_password: "{{ patroni_cluster_name }}11pass"
+
+## Параметры dcs
+## Акутальны только при инициализации кластера, дальнейшие изменения через patronictl
+patroni_dcs_ttl: "30"
+patroni_dcs_loop_wait: "10"
+patroni_dcs_retry_timeout: "10"
+patroni_dcs_maximum_lag_on_failover: "1048576"
+patroni_dcs_master_start_timeout: "300"
+patroni_dcs_synchronous_mode: True
+patroni_dcs_synchronous_mode_strict: False
+patroni_dcs_synchronous_node_count: "1"
+### Параметры standby cluster
+patroni_dcs_standby_cluster: False
+patroni_dcs_standby_cluster_parameters:
+  host: "1.2.3.4"
+  port: "5432"
+  primary_slot_name: "{{ patroni_cluster_name }}_patroni"
+### Параметры postgres
+patroni_dcs_postgres_use_pg_rewind: True
+patroni_dcs_postgres_use_slots: True
+patroni_dcs_postgres_parameters:
+  max_connections: "500"
+  wal_level: "replica"
+  hot_standby: "on"
+  max_wal_senders: "10"
+  max_prepared_transactions: "0"
+  max_locks_per_transaction: "64"
+  track_commit_timestamp: "off"
+  max_replication_slots: "10"
+  max_worker_processes: "8"
+  wal_log_hints: "on"
+  wal_keep_segments: "128"
+
+## Параметры инициализации postgres
+
+patroni_initdb_encoding: "UTF8"
+patroni_initdb_locale: "ru_RU.UTF8"
+
+## Локальные параметры patroni:
+
+patroni_postgres_superuser: "{{ postgres_superuser }}"
+patroni_postgres_replication: "{{ postgres_replication }}"
+patroni_postgres_replication_password: "{{ postgres_replication_password }}"
+patroni_postgres_rewind: "{{ postgres_replication }}"
+patroni_postgres_rewind_password: "{{ postgres_replication_password }}"
+
+patroni_create_replica_method:
+  - "basebackup"
+
+#patroni_create_replica_method_details:
+#  basebackup:
+#    max-rate: '1G'
+#  pgbackrest:
+#    command: pgbackrest --stanza=<scope> --delta restore
+
+patroni_tags_nofailover: False
+patroni_tags_noloadbalance: False
+patroni_tags_clonefrom: False
+patroni_tags_nosync: False
+
+patroni_log_dir: "{{ postgres_log }}"
+patroni_log_level: "INFO"
+patroni_log_file_num: "5"
+patroni_log_file_size: "25165824"

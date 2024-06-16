@@ -1,0 +1,10 @@
+---
+
+- name: patroni-packages
+  include_tasks: patroni-packages.yml
+  when: patroni_packages_enabled | default(True)
+  tags: [patroni-packages]
+
+- name: patroni-configure
+  include_tasks: patroni-configure.yml
+  tags: [patroni-configure, patroni-start, patroni-stop, patroni-reload]

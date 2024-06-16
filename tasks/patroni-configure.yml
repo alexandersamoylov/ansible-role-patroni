@@ -1,0 +1,84 @@
+---
+
+- name: patroni-configure check service
+  template:
+    src: "{{ patroni_service_source }}"
+    dest: "/etc/systemd/system/{{ patroni_service }}"
+    owner: "root"
+    group: "root"
+    mode: "644"
+  become: True
+  become_user: "root"
+  tags: [patroni-configure]
+
+- name: postgres-configure daemon-reload
+  systemd:
+    daemon_reload: True
+  become: True
+  tags: [patroni-configure]
+
+- name: patroni-configure check directory
+  file: 
+    path: "{{ item.path }}"
+    state: "directory"
+    mode: "{{ item.mode }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  become: True
+  loop:
+    - path: "/etc/patroni"
+      mode: "755"
+      owner: "postgres"
+      group: "postgres"
+  tags: [patroni-configure]
+
+- name: patroni-configure check config
+  template:
+    src: "{{ patroni_config_source }}"
+    dest: "{{ patroni_config }}"
+    owner: "postgres"
+    group: "postgres"
+    mode: "600"
+  become: True
+  become_user: "root"
+  tags: [patroni-configure]
+
+# Остановка сервиса postgresql, если изначально запущен ролью postgresql.server
+- name: patroni-configure postgresql service stop
+  systemd:
+    name: "{{ postgres_service }}"
+    state: "stopped"
+    enabled: False
+  become: True
+  become_user: "root"
+  tags: [patroni-configure]
+
+# patroni reload
+- name: patroni-configure reload patroni
+  systemd:
+    name: "patroni"
+    state: "reloaded"
+    enabled: False
+  become: True
+  become_user: "root"
+  tags: [never, patroni-reload]
+
+# stop patroni service
+- name: patroni-configure stop patroni
+  systemd:
+    name: "patroni"
+    state: "stopped"
+    enabled: True
+  become: True
+  become_user: "root"
+  tags: [never, patroni-stop]
+  
+# start patroni service
+- name: patroni-configure start patroni
+  systemd:
+    name: "patroni"
+    state: "started"
+    enabled: True
+  become: True
+  become_user: "root"
+  tags: [patroni-configure, patroni-start]

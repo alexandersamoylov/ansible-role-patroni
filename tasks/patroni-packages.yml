@@ -1,0 +1,11 @@
+---
+
+- name: patroni-packages-altlinux
+  include_tasks: patroni-packages-altlinux.yml
+  when: patroni_os_family == "altlinux"
+  tags: [patroni-packages]
+
+- name: patroni-packages-astralinux
+  include_tasks: patroni-packages-astralinux.yml
+  when: patroni_os_family == "astralinux"
+  tags: [patroni-packages]

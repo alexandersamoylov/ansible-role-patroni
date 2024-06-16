@@ -1,0 +1,11 @@
+---
+
+- name: patroni-packages-astralinux pkg install
+  apt:
+    name: "{{ item }}"
+    state: "present"
+    update_cache: True
+  become: True
+  loop:
+    - "patroni"
+  tags: [patroni-packages]

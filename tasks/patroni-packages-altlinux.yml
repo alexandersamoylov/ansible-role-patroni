@@ -1,0 +1,12 @@
+---
+
+- name: patroni-packages-altlinux pkg install
+  apt_rpm:
+    name: "{{ item }}"
+    state: "present"
+    update_cache: True
+    default_release: "{{ patroni_packages_apt_release | default(omit) }}"
+  become: True
+  loop:
+    - "patroni"
+  tags: [patroni-packages]

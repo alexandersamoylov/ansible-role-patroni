@@ -1,0 +1,98 @@
+#------------------------------------------------------------------------------
+# patroni configuration file (Managed by Ansible)
+#------------------------------------------------------------------------------
+
+scope: {{ patroni_cluster_name }}
+namespace: /postgres/
+name: {{ inventory_hostname }}
+
+restapi:
+  listen: {{ patroni_ip }}:{{ patroni_port }}
+  connect_address: {{ patroni_ip }}:{{ patroni_port }}
+  authentication:
+    username: {{ patroni_restapi_username }}
+    password: {{ patroni_restapi_password }}
+
+etcd:
+  username: {{ patroni_etcd_username }}
+  password: {{ patroni_etcd_password }}
+  hosts:
+{% for item in patroni_etcd_hosts %}
+    - {{ item.ip }}:{{ patroni_etcd_port }}
+{% endfor %}
+
+bootstrap:
+  dcs:
+    ttl: {{ patroni_dcs_ttl }}
+    loop_wait: {{ patroni_dcs_loop_wait }}
+    retry_timeout: {{ patroni_dcs_retry_timeout }}
+    maximum_lag_on_failover: {{ patroni_dcs_maximum_lag_on_failover }}
+    master_start_timeout: {{ patroni_dcs_master_start_timeout }}
+    synchronous_mode: {{ patroni_dcs_synchronous_mode }}
+    synchronous_mode_strict: {{ patroni_dcs_synchronous_mode_strict }}
+    synchronous_node_count: {{ patroni_dcs_synchronous_node_count }}
+{% if patroni_dcs_standby_cluster %}    
+
+    standby_cluster:
+{% for key, value in patroni_dcs_standby_cluster_parameters.items() %}
+      {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+
+    postgresql:
+      use_pg_rewind: {{ patroni_dcs_postgres_use_pg_rewind }}
+      use_slots: {{ patroni_dcs_postgres_use_slots }}
+      parameters:
+{% for key, value in patroni_dcs_postgres_parameters.items() %}
+        {{ key }}: {{ value }}
+{% endfor %}
+  
+  initdb:
+    - encoding: {{ patroni_initdb_encoding }}
+    - locale: {{ patroni_initdb_locale }}
+    - data-checksums
+
+postgresql:
+  listen: 127.0.0.1,{{ patroni_ip }}:{{ postgres_port }}
+  connect_address: {{ patroni_ip }}:{{ postgres_port }}
+  use_unix_socket: True
+  data_dir: {{ postgres_data }}
+  bin_dir: {{ postgres_bin }}
+  config_dir: {{ postgres_conf }}
+  pgpass: {{ postgres_home }}/.pgpass_patroni
+  
+  authentication:
+    superuser:
+      username: {{ patroni_postgres_superuser }}
+    replication:
+      username: {{ patroni_postgres_replication }}
+      password: {{ patroni_postgres_replication_password }}
+    rewind:
+      username: {{ patroni_postgres_rewind }}
+      password: {{ patroni_postgres_rewind_password }}
+    
+  create_replica_method:
+{% for item in patroni_create_replica_method %}
+    - {{ item }}
+{% endfor %}
+{% if patroni_create_replica_method_details is defined %}
+{% for key, value in patroni_create_replica_method_details.items() %}
+
+  {{ key }}:
+{% for key2, value2 in value.items() %}
+    {{ key2 }}: {{ value2 }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+tags:
+  nofailover: {{ patroni_tags_nofailover }}
+  noloadbalance: {{ patroni_tags_noloadbalance }}
+  clonefrom: {{ patroni_tags_clonefrom }}
+  nosync: {{ patroni_tags_nosync }}
+
+log:
+  dir: {{ patroni_log_dir }}
+  level: {{ patroni_log_level }}
+  file_num: {{ patroni_log_file_num }}
+  file_size: {{ patroni_log_file_size }}
